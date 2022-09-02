@@ -1,4 +1,4 @@
-package redisGo
+package redis
 
 func main() {
 
