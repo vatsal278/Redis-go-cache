@@ -1,4 +1,4 @@
-module github.com/vatsal278/redis
+module github.com/vatsal278/redisGo
 
 go 1.18
 
