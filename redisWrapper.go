@@ -3,7 +3,6 @@ package wrapper
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
-	"log"
 	"time"
 )
 
@@ -43,14 +42,14 @@ func RedisSdkI(c Config) RedisSdk {
 func (r rdbClient) RedisGet(key string) ([]byte, error) {
 	data, err := r.rdb.Get(context.Background(), key).Bytes()
 	if err != nil {
-		log.Print(err)
+		return nil, err
 	}
 	return data, err
 }
 func (r rdbClient) RedisSet(key string, value interface{}) error {
 	err := r.rdb.Set(context.Background(), key, value, 5*time.Minute).Err()
 	if err != nil {
-		log.Print(err)
+		return err
 	}
-	return err
+	return nil
 }
