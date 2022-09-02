@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type Rdb struct {
+type cache struct {
 	rdb *redis.Client
 }
 type Config struct {
@@ -38,25 +38,25 @@ func NewCacher(c Config) Cacher {
 		PoolSize:     c.PoolSize,
 		MinIdleConns: c.MinIdleConns,
 	})
-	return &Rdb{
+	return &cache{
 		rdb: rdb,
 	}
 }
-func (r Rdb) Get(key string) ([]byte, error) {
+func (r cache) Get(key string) ([]byte, error) {
 	data, err := r.rdb.Get(context.Background(), key).Bytes()
 	if err != nil {
 		return nil, err
 	}
 	return data, err
 }
-func (r Rdb) Set(key string, value interface{}, expiry time.Duration) error {
+func (r cache) Set(key string, value interface{}, expiry time.Duration) error {
 	err := r.rdb.Set(context.Background(), key, value, expiry).Err()
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (r Rdb) Health() (string, error) {
+func (r cache) Health() (string, error) {
 	status := r.rdb.Ping(context.Background())
 	return status.Result()
 }
