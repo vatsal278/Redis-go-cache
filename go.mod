@@ -1,4 +1,4 @@
-module Redis-go-cache
+module github.com/vatsal278/Redis-go-cache
 
 go 1.18
 
