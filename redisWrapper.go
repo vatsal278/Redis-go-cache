@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type rdbClient struct {
+type Rdb struct {
 	rdb *redis.Client
 }
 type Config struct {
@@ -19,12 +19,15 @@ type Config struct {
 	PoolSize     int
 	MinIdleConns int
 }
-type RedisSdk interface {
-	RedisGet(string) ([]byte, error)
-	RedisSet(string, interface{}, time.Duration) error
+
+//go:generate mockgen --destination=./mocks/mock_Cacher.go --package=mocks github.com/vatsal278/go-redis-cache Cacher
+type Cacher interface {
+	Get(string) ([]byte, error)
+	Set(string, interface{}, time.Duration) error
+	Health() (string, error)
 }
 
-func RedisSdkI(c Config) RedisSdk {
+func NewCacher(c Config) Cacher {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:         c.Addr,
 		Username:     c.Username,
@@ -35,21 +38,25 @@ func RedisSdkI(c Config) RedisSdk {
 		PoolSize:     c.PoolSize,
 		MinIdleConns: c.MinIdleConns,
 	})
-	return &rdbClient{
+	return &Rdb{
 		rdb: rdb,
 	}
 }
-func (r rdbClient) RedisGet(key string) ([]byte, error) {
+func (r Rdb) Get(key string) ([]byte, error) {
 	data, err := r.rdb.Get(context.Background(), key).Bytes()
 	if err != nil {
 		return nil, err
 	}
 	return data, err
 }
-func (r rdbClient) RedisSet(key string, value interface{}, expiry time.Duration) error {
+func (r Rdb) Set(key string, value interface{}, expiry time.Duration) error {
 	err := r.rdb.Set(context.Background(), key, value, expiry).Err()
 	if err != nil {
 		return err
 	}
 	return nil
+}
+func (r Rdb) Health() (string, error) {
+	status := r.rdb.Ping(context.Background())
+	return status.Result()
 }
