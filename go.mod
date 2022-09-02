@@ -1,4 +1,4 @@
-module github.com/vatsal278/redis-go-cache
+module github.com/vatsal278/go-redis-cache
 
 go 1.18
 
