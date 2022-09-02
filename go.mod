@@ -1,4 +1,4 @@
-module RedisGoWrapper
+module Redis-go-cache
 
 go 1.18
 
