@@ -21,7 +21,7 @@ type Config struct {
 }
 type RedisSdk interface {
 	RedisGet(string) ([]byte, error)
-	RedisSet(string, interface{}) error
+	RedisSet(string, interface{}, time.Duration) error
 }
 
 func RedisSdkI(c Config) RedisSdk {
@@ -46,8 +46,8 @@ func (r rdbClient) RedisGet(key string) ([]byte, error) {
 	}
 	return data, err
 }
-func (r rdbClient) RedisSet(key string, value interface{}) error {
-	err := r.rdb.Set(context.Background(), key, value, 5*time.Minute).Err()
+func (r rdbClient) RedisSet(key string, value interface{}, expiry time.Duration) error {
+	err := r.rdb.Set(context.Background(), key, value, expiry).Err()
 	if err != nil {
 		return err
 	}
