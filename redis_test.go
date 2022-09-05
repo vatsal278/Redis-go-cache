@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-redis/redis/v8"
 	"testing"
+	"time"
 )
 
 func TestHealth(t *testing.T) {
@@ -13,15 +14,14 @@ func TestHealth(t *testing.T) {
 		validateFunc func(string, error)
 	}{
 		{
-			name:        "Success:: Register Publisher",
+			name:        "Success::Health",
 			requestBody: "localhost:9096",
 			validateFunc: func(s string, err error) {
 				if err != nil {
-					t.Log(err.Error())
+					t.Errorf("want %v got %v", nil, err.Error())
 				}
 				if s != "PONG" {
-					t.Log(s)
-					t.Fail()
+					t.Errorf("want %v got %v", "PONG", s)
 				}
 			},
 		},
@@ -29,9 +29,8 @@ func TestHealth(t *testing.T) {
 			name:        "Failure:: Health",
 			requestBody: "",
 			validateFunc: func(s string, err error) {
-				if err.Error() != "dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it." {
-					t.Errorf("want %v got %v", "dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it.", err.Error())
-					t.Fail()
+				if err == nil {
+					t.Errorf("want %v got %v", "not nil", nil)
 				}
 			},
 		},
@@ -39,9 +38,7 @@ func TestHealth(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			cacher := NewCacher(Config{
-				Addr:     tt.requestBody,
-				Password: "",
-				DB:       0,
+				Addr: tt.requestBody,
 			})
 			x, err := cacher.Health()
 			tt.validateFunc(x, err)
@@ -50,58 +47,62 @@ func TestHealth(t *testing.T) {
 
 }
 func TestSet(t *testing.T) {
-	cacher := NewCacher(Config{
-		Addr:     "localhost:9096",
-		Password: "",
-		DB:       0,
-	})
+
 	tests := []struct {
 		name         string
 		requestBody  string
-		validateFunc func(string, error)
+		expiry       time.Duration
+		validateFunc func(Cacher, string, error)
 	}{
 		{
 			name:        "Success:: Set",
-			requestBody: "",
-			validateFunc: func(data string, err error) {
+			requestBody: "localhost:9096",
+			validateFunc: func(cacher Cacher, data string, err error) {
 				if err != nil {
-					t.Log(err.Error())
-					t.Fail()
+					t.Errorf("want %v got %v", nil, err.Error())
 				}
-				x, err := cacher.Get("")
+				x, err := cacher.Get("1")
 				if err != nil {
-					t.Log(err.Error())
+					t.Errorf("want %v got %v", nil, err.Error())
 				}
 				if fmt.Sprintf("%s", x) != data {
-					t.Log(fmt.Sprintf("%s", x))
-					t.Fail()
+					t.Errorf("want %v got %v", data, fmt.Sprintf("%s", x))
+				}
+			},
+		},
+		{
+			name:        "Success:: Set:: With Expiry",
+			requestBody: "localhost:9096",
+			expiry:      2 * time.Second,
+			validateFunc: func(cacher Cacher, data string, err error) {
+				if err != nil {
+					t.Errorf("want %v got %v", nil, err.Error())
+				}
+				time.Sleep(2 * time.Second)
+				_, err = cacher.Get("1")
+				if err != redis.Nil {
+					t.Errorf("want %v got %v", redis.Nil, err)
 				}
 			},
 		},
 		{
 			name:        "Failure:: Set",
 			requestBody: "",
-			validateFunc: func(data string, err error) {
-				if err != nil {
-					t.Log(err.Error())
-					t.Fail()
-				}
-				x, err := cacher.Get("1")
-				if err != nil {
-					t.Log(err.Error())
-				}
-				if fmt.Sprintf("%s", x) != data {
-					t.Log(fmt.Sprintf("%s", x))
-					t.Fail()
+			validateFunc: func(cacher Cacher, data string, err error) {
+				if err == nil {
+					t.Errorf("want %v got %v", "not nil", nil)
 				}
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			cacher := NewCacher(Config{
+				Addr: tt.requestBody,
+			})
 			data := tt.requestBody
-			err := cacher.Set("1", data, 0)
-			tt.validateFunc(data, err)
+			err := cacher.Set("1", data, tt.expiry)
+			tt.validateFunc(cacher, data, err)
 		})
 	}
 
@@ -109,9 +110,7 @@ func TestSet(t *testing.T) {
 
 func TestGet(t *testing.T) {
 	cacher := NewCacher(Config{
-		Addr:     "localhost:9096",
-		Password: "",
-		DB:       0,
+		Addr: "localhost:9096",
 	})
 	tests := []struct {
 		name         string
@@ -125,16 +124,15 @@ func TestGet(t *testing.T) {
 			setupFunc: func(data string) {
 				err := cacher.Set("1", data, 0)
 				if err != nil {
-					t.Log(err.Error())
+					t.Errorf("want %v got %v", nil, err.Error())
 				}
 			},
 			validateFunc: func(s []byte, request string, err error) {
 				if err != nil {
-					t.Log(err.Error())
+					t.Errorf("want %v got %v", nil, err.Error())
 				}
 				if fmt.Sprintf("%s", s) != request {
-					t.Log(fmt.Sprintf("%s", s))
-					t.Fail()
+					t.Errorf("want %v got %v", request, fmt.Sprintf("%s", s))
 				}
 			},
 		},
@@ -146,7 +144,7 @@ func TestGet(t *testing.T) {
 			},
 			validateFunc: func(s []byte, request string, err error) {
 				if err != redis.Nil {
-					t.Error(err.Error())
+					t.Errorf("want %v got %v", redis.Nil, err)
 				}
 			},
 		},
