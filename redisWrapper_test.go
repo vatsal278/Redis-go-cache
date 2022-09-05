@@ -2,6 +2,7 @@ package redis
 
 import (
 	"fmt"
+	"github.com/go-redis/redis/v8"
 	"testing"
 )
 
@@ -28,8 +29,8 @@ func TestHealth(t *testing.T) {
 			name:        "Failure:: Health",
 			requestBody: "",
 			validateFunc: func(s string, err error) {
-				if err == nil {
-					t.Log(err.Error())
+				if err.Error() != "dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it." {
+					t.Errorf("want %v got %v", "dial tcp [::1]:6379: connectex: No connection could be made because the target machine actively refused it.", err.Error())
 					t.Fail()
 				}
 			},
@@ -61,13 +62,13 @@ func TestSet(t *testing.T) {
 	}{
 		{
 			name:        "Success:: Set",
-			requestBody: "Hello",
+			requestBody: "",
 			validateFunc: func(data string, err error) {
 				if err != nil {
 					t.Log(err.Error())
 					t.Fail()
 				}
-				x, err := cacher.Get("1")
+				x, err := cacher.Get("")
 				if err != nil {
 					t.Log(err.Error())
 				}
@@ -79,7 +80,7 @@ func TestSet(t *testing.T) {
 		},
 		{
 			name:        "Failure:: Set",
-			requestBody: "Hello",
+			requestBody: "",
 			validateFunc: func(data string, err error) {
 				if err != nil {
 					t.Log(err.Error())
@@ -120,7 +121,7 @@ func TestGet(t *testing.T) {
 	}{
 		{
 			name:        "Success:: Get",
-			requestBody: "Hello",
+			requestBody: "1",
 			setupFunc: func(data string) {
 				err := cacher.Set("1", data, 0)
 				if err != nil {
@@ -139,30 +140,23 @@ func TestGet(t *testing.T) {
 		},
 		{
 			name:        "Failure:: Get",
-			requestBody: "Hello",
+			requestBody: "2",
 			setupFunc: func(data string) {
-				err := cacher.Set("1", data, 0)
-				if err != nil {
-					t.Log(err.Error())
-				}
+
 			},
 			validateFunc: func(s []byte, request string, err error) {
-				if err != nil {
-					t.Log(err.Error())
-				}
-				if fmt.Sprintf("%s", s) != request {
-					t.Log(fmt.Sprintf("%s", s))
-					t.Fail()
+				if err != redis.Nil {
+					t.Error(err.Error())
 				}
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			data := tt.requestBody
-			tt.setupFunc(data)
-			x, err := cacher.Get("1")
-			tt.validateFunc(x, data, err)
+			key := tt.requestBody
+			tt.setupFunc("Hello")
+			x, err := cacher.Get(key)
+			tt.validateFunc(x, "Hello", err)
 		})
 	}
 

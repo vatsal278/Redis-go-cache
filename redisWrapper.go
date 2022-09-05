@@ -42,21 +42,21 @@ func NewCacher(c Config) Cacher {
 		rdb: rdb,
 	}
 }
-func (r cache) Get(key string) ([]byte, error) {
-	data, err := r.rdb.Get(context.Background(), key).Bytes()
+func (c cache) Get(key string) ([]byte, error) {
+	data, err := c.rdb.Get(context.Background(), key).Bytes()
 	if err != nil {
 		return nil, err
 	}
 	return data, err
 }
-func (r cache) Set(key string, value interface{}, expiry time.Duration) error {
-	err := r.rdb.Set(context.Background(), key, value, expiry).Err()
+func (c cache) Set(key string, value interface{}, expiry time.Duration) error {
+	err := c.rdb.Set(context.Background(), key, value, expiry).Err()
 	if err != nil {
 		return err
 	}
 	return nil
 }
-func (r cache) Health() (string, error) {
-	status := r.rdb.Ping(context.Background())
+func (c cache) Health() (string, error) {
+	status := c.rdb.Ping(context.Background())
 	return status.Result()
 }
