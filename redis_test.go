@@ -108,6 +108,55 @@ func TestSet(t *testing.T) {
 
 }
 
+func TestDelete(t *testing.T) {
+	cacher := NewCacher(Config{
+		Addr: "localhost:9096",
+	})
+	tests := []struct {
+		name         string
+		requestBody  string
+		setupFunc    func(string)
+		validateFunc func(string)
+	}{
+		{
+			name:        "Success:: Delete",
+			requestBody: "1",
+			setupFunc: func(data string) {
+				err := cacher.Set("1", data, 0)
+				if err != nil {
+					t.Errorf("want %v got %v", nil, err.Error())
+				}
+			},
+			validateFunc: func(x string) {
+				if x != "del 1: 1" {
+					t.Errorf("want %v got %v", "del 1: 1", x)
+				}
+			},
+		},
+		{
+			name:        "Success:: Delete :: No key available",
+			requestBody: "1",
+			setupFunc: func(data string) {
+
+			},
+			validateFunc: func(x string) {
+				if x != "del 1: 0" {
+					t.Errorf("want %v got %v", "del 1: 0", x)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key := tt.requestBody
+			tt.setupFunc("Hello")
+			x := cacher.Delete(key)
+			tt.validateFunc(x)
+		})
+	}
+
+}
+
 func TestGet(t *testing.T) {
 	cacher := NewCacher(Config{
 		Addr: "localhost:9096",
