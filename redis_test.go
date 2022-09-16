@@ -116,7 +116,7 @@ func TestDelete(t *testing.T) {
 		name         string
 		requestBody  string
 		setupFunc    func(string)
-		validateFunc func(string)
+		validateFunc func(error)
 	}{
 		{
 			name:        "Success:: Delete",
@@ -127,21 +127,9 @@ func TestDelete(t *testing.T) {
 					t.Errorf("want %v got %v", nil, err.Error())
 				}
 			},
-			validateFunc: func(x string) {
-				if x != "del 1: 1" {
-					t.Errorf("want %v got %v", "del 1: 1", x)
-				}
-			},
-		},
-		{
-			name:        "Success:: Delete :: No key available",
-			requestBody: "1",
-			setupFunc: func(data string) {
-
-			},
-			validateFunc: func(x string) {
-				if x != "del 1: 0" {
-					t.Errorf("want %v got %v", "del 1: 0", x)
+			validateFunc: func(err error) {
+				if err != nil {
+					t.Errorf("want %v got %v", nil, err)
 				}
 			},
 		},
@@ -150,8 +138,8 @@ func TestDelete(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			key := tt.requestBody
 			tt.setupFunc("Hello")
-			x := cacher.Delete(key)
-			tt.validateFunc(x)
+			err := cacher.Delete(key)
+			tt.validateFunc(err)
 		})
 	}
 

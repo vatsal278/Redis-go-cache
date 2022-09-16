@@ -25,7 +25,7 @@ type Cacher interface {
 	Get(string) ([]byte, error)
 	Set(string, interface{}, time.Duration) error
 	Health() (string, error)
-	Delete(string) string
+	Delete(string) error
 }
 
 func NewCacher(c Config) Cacher {
@@ -62,7 +62,6 @@ func (c cache) Health() (string, error) {
 	return status.Result()
 }
 
-func (c cache) Delete(key string) string {
-	x := c.rdb.Del(context.Background(), key).String()
-	return x
+func (c cache) Delete(key string) error {
+	return c.rdb.Del(context.Background(), key).Err()
 }
