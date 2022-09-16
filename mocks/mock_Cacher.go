@@ -35,10 +35,10 @@ func (m *MockCacher) EXPECT() *MockCacherMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockCacher) Delete(arg0 string) string {
+func (m *MockCacher) Delete(arg0 string) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Delete", arg0)
-	ret0, _ := ret[0].(string)
+	ret0, _ := ret[0].(error)
 	return ret0
 }
 
